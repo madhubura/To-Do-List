@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive To-Do List</title>
+    <!-- Inter font from Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to enhance Tailwind and add specific interactions */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+        }
+
+        .container {
+            max-width: 600px; /* Max width for the To-Do list container */
+        }
+
+        .todo-item {
+            display: flex; /* Use flexbox for item layout */
+            align-items: center; /* Vertically align items */
+            justify-content: space-between; /* Space between text and buttons */
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background-color: #ffffff; /* White background for list items */
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            transition: all 0.3s ease-in-out; /* Smooth transition for changes */
+        }
+
+        .todo-item.completed {
+            text-decoration: line-through; /* Strike-through for completed tasks */
+            color: #888; /* Dim text for completed tasks */
+            background-color: #e0e7ff; /* Lighter background for completed tasks */
+        }
+
+        .todo-item-text {
+            flex-grow: 1; /* Allow text to take available space */
+            margin-right: 1rem;
+            word-break: break-word; /* Break long words */
+        }
+
+        .todo-actions {
+            display: flex; /* Flexbox for action buttons */
+            gap: 0.5rem; /* Space between buttons */
+        }
+
+        .action-btn {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .complete-btn {
+            background-color: #3b82f6; /* Blue for complete button */
+            color: white;
+        }
+        .complete-btn:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+        }
+
+        .delete-btn {
+            background-color: #ef4444; /* Red for delete button */
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626; /* Darker red on hover */
+        }
+
+        /* Responsive adjustments using Tailwind's breakpoints directly in HTML classes are preferred,
+           but custom media queries can be added here if highly specific control is needed beyond Tailwind. */
+        @media (max-width: 640px) { /* Small screens */
+            .todo-item {
+                flex-wrap: wrap; /* Allow items to wrap on small screens */
+            }
+            .todo-item-text {
+                margin-bottom: 0.5rem; /* Add space below text when wrapped */
+                margin-right: 0;
+                width: 100%; /* Full width for text */
+            }
+            .todo-actions {
+                width: 100%; /* Full width for buttons when wrapped */
+                justify-content: flex-end; /* Align buttons to the right */
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="container bg-white p-6 rounded-xl shadow-2xl space-y-6">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">My To-Do List</h1>
+
+        <!-- Input and Add Button Section -->
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+            <input
+                type="text"
+                id="todoInput"
+                placeholder="Add a new task..."
+                class="flex-grow p-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                aria-label="New to-do item"
+            >
+            <button
+                id="addTaskBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+            >
+                Add Task
+            </button>
+        </div>
+
+        <!-- To-Do List Display Area -->
+        <ul id="todoList" class="space-y-3">
+            <!-- To-Do items will be dynamically added here -->
+        </ul>
+    </div>
+
+    <script>
+        // JavaScript Basics: Theory and Hands-On Application
+
+        // 1. Variables and DOM Elements
+        //    - Using 'const' for elements that won't be reassigned.
+        //    - Using 'let' for variables whose values might change.
+        const todoInput = document.getElementById('todoInput'); // Reference to the input field
+        const addTaskBtn = document.getElementById('addTaskBtn'); // Reference to the 'Add Task' button
+        const todoList = document.getElementById('todoList');     // Reference to the unordered list
+
+        // 2. Functions: Core logic encapsulated in reusable blocks
+        //    - `createTodoItem`: Function to create a new list item (<li>) with its content and buttons.
+        //    - `addTask`: Function triggered by button click or Enter key press.
+        //    - `toggleComplete`: Function to mark a task as completed or incomplete.
+        //    - `deleteTask`: Function to remove a task.
+
+        /**
+         * Creates a new list item element for a to-do task.
+         * @param {string} taskText - The text content of the to-do task.
+         * @returns {HTMLElement} The created <li> element.
+         */
+        function createTodoItem(taskText) {
+            // Create the main list item (li)
+            const listItem = document.createElement('li');
+            listItem.classList.add('todo-item'); // Apply base styling
+
+            // Create the span for the task text
+            const taskTextSpan = document.createElement('span');
+            taskTextSpan.classList.add('todo-item-text');
+            taskTextSpan.textContent = taskText; // Set the text content of the task
+
+            // Create a div for action buttons (complete and delete)
+            const actionsDiv = document.createElement('div');
+            actionsDiv.classList.add('todo-actions');
+
+            // Create the 'Complete' button
+            const completeBtn = document.createElement('button');
+            completeBtn.classList.add('action-btn', 'complete-btn');
+            completeBtn.textContent = 'Complete';
+            // Add event listener to toggle task completion status
+            completeBtn.addEventListener('click', toggleComplete);
+
+            // Create the 'Delete' button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('action-btn', 'delete-btn');
+            deleteBtn.textContent = 'Delete';
+            // Add event listener to delete the task
+            deleteBtn.addEventListener('click', deleteTask);
+
+            // Append text and buttons to their respective containers
+            actionsDiv.appendChild(completeBtn);
+            actionsDiv.appendChild(deleteBtn);
+            listItem.appendChild(taskTextSpan);
+            listItem.appendChild(actionsDiv);
+
+            return listItem; // Return the fully constructed list item
+        }
+
+        /**
+         * Adds a new task to the To-Do list.
+         * This function demonstrates:
+         * - Getting input value.
+         * - Control structures (if condition).
+         * - DOM manipulation (createElement, appendChild).
+         * - Clearing input field.
+         */
+        function addTask() {
+            // Get the value from the input field.
+            // Data Types: `todoInput.value` is a string.
+            const taskText = todoInput.value.trim(); // `.trim()` removes leading/trailing whitespace
+
+            // Control Structure: Check if the input is not empty
+            if (taskText === '') { // Operator: Strict equality (===)
+                // If input is empty, show a simple message (instead of alert, which is blocked in immersive)
+                console.warn('Cannot add an empty task. Please enter some text.');
+                // In a real app, you'd show a user-friendly message on the UI.
+                return; // Exit the function
+            }
+
+            // Create a new to-do list item using our helper function
+            const newTodoItem = createTodoItem(taskText);
+
+            // DOM Manipulation: Append the new item to the To-Do list (ul)
+            todoList.appendChild(newTodoItem);
+
+            // Clear the input field after adding the task
+            todoInput.value = '';
+        }
+
+        /**
+         * Toggles the 'completed' status of a to-do item.
+         * This function demonstrates:
+         * - Event object (`e`).
+         * - `e.target` to get the clicked element.
+         * - `parentNode` to traverse the DOM to find the `li`.
+         * - `classList.toggle` for adding/removing a CSS class.
+         *
+         * Scope: `e` and `listItem` are local to this function.
+         * `toggleComplete` is defined in the global scope (or outer scope if nested).
+         */
+        function toggleComplete(e) {
+            // `e.target` is the button that was clicked.
+            // `e.target.parentNode` is the `div` containing the buttons.
+            // `e.target.parentNode.parentNode` is the `li` element (the todo-item).
+            const listItem = e.target.parentNode.parentNode;
+            listItem.classList.toggle('completed'); // Toggle the 'completed' class
+        }
+
+        /**
+         * Deletes a to-do item from the list.
+         * This function demonstrates:
+         * - `removeChild` for DOM removal.
+         */
+        function deleteTask(e) {
+            // Get the parent `li` element, similar to `toggleComplete`
+            const listItem = e.target.parentNode.parentNode;
+            // DOM Manipulation: Remove the list item from its parent (the `ul`)
+            todoList.removeChild(listItem);
+        }
+
+        // 3. Event Listeners: Responding to user interactions
+
+        // Add task when the button is clicked
+        addTaskBtn.addEventListener('click', addTask);
+
+        // Add task when 'Enter' key is pressed in the input field
+        todoInput.addEventListener('keypress', function(e) {
+            // Operator: Check if the 'Enter' key was pressed
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Initial tasks (optional, for demonstration)
+        // This shows how to programmatically add items
+        // addTask('Learn JavaScript basics');
+        // addTask('Understand DOM manipulation');
+        // addTask('Build a To-Do App');
+
+    </script>
+</body>
+</html>
